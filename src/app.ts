@@ -5,6 +5,7 @@ import dbInit from "./DB/init";
 import Session from "express-session";
 import SequelizeStore from "connect-session-sequelize";
 import cors from "cors";
+import AllRouter from "./Routers/AllRouter";
 
 const app = express();
 app.use(express.json());
@@ -40,6 +41,8 @@ const corsInstance = cors({
   credentials: true,
 });
 app.use(corsInstance);
+
+app.use("/", AllRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);

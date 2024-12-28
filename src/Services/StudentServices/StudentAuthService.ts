@@ -1,6 +1,6 @@
 import { hash, compare } from "bcrypt";
 import jwt from "jsonwebtoken";
-import Studentmodel from "../../Models/StudentModels/StudentModel.ts";
+import Studentmodel from "../../Models/StudentModels/StudentModel";
 
 const StudentAuthService = {
   registerStudent: async (studentData: {

@@ -1,27 +1,28 @@
 import StudentAuthService from "../../Services/StudentServices/StudentAuthService";
 import { Request, Response } from "express";
+
 interface StudentAuthControllerType {
-  registerStudent: (req: Request, res: Response) => Promise<Response>;
-  loginStudent: (req: Request, res: Response) => Promise<Response>;
+  registerStudent: (req: Request, res: Response) => Promise<void>;
+  loginStudent: (req: Request, res: Response) => Promise<void>;
 }
 
 const StudentAuthController: StudentAuthControllerType = {
-  registerStudent: async (req: Request, res: Response): Promise<Response> => {
+  registerStudent: async (req: Request, res: Response): Promise<void> => {
     try {
-      const student = await StudentAuthService.registerStudent(req.body);
-      return res
-        .status(201)
-        .json({ message: "student registered successfully" });
+      await StudentAuthService.registerStudent(req.body);
+      res.status(201).json({ message: "Student registered successfully" });
     } catch (error: any) {
-      if (error.message === "student with this Email already exists") {
-        return res
+      if (error.message === "Student with this Email already exists") {
+        res
           .status(400)
-          .json({ message: "studemt with this email already exists" });
+          .json({ message: "Student with this email already exists" });
+      } else {
+        res.status(500).json({ message: "Internal Server Error" });
       }
-      return res.status(500).json({ message: "Internal Server Error" });
     }
   },
-  loginStudent: async (req: Request, res: Response): Promise<Response> => {
+
+  loginStudent: async (req: Request, res: Response): Promise<void> => {
     try {
       const session = req.session as unknown as {
         studentToken: string;
@@ -33,21 +34,21 @@ const StudentAuthController: StudentAuthControllerType = {
         req.body
       );
       const { studentToken, studentdata } = student;
-      return res.status(200).json({
-        message: "student Loged in Sussceefully",
+      res.status(200).json({
+        message: "Student logged in successfully",
         studentToken,
         studentdata,
       });
     } catch (error: any) {
       let statusCode = 500;
-      if (error.message == "student with this email do not exist") {
+      if (error.message === "Student with this email does not exist") {
         statusCode = 403;
-      } else if (error.message == "Invalid Password") {
+      } else if (error.message === "Invalid Password") {
         statusCode = 403;
       }
-      return res
+      res
         .status(statusCode)
-        .json({ message: "Bad Requset", error: error.message });
+        .json({ message: "Bad Request", error: error.message });
     }
   },
 };

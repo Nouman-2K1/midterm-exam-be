@@ -1,6 +1,6 @@
 import { hash, compare } from "bcrypt";
 import jwt from "jsonwebtoken";
-import AdminModel from "../../Models/AdminModels/AdminModel.ts";
+import AdminModel from "../../Models/AdminModels/AdminModel";
 
 const AdminAuthService = {
   registerAdmin: async (adminData: {

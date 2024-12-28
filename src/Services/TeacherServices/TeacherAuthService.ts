@@ -1,6 +1,6 @@
 import { hash, compare } from "bcrypt";
 import jwt from "jsonwebtoken";
-import TeacherModel from "../../Models/TeacherModels/TeacherModel.ts";
+import TeacherModel from "../../Models/TeacherModels/TeacherModel";
 
 const TeacherAuthService = {
   registerTeacher: async (teacherData: {
