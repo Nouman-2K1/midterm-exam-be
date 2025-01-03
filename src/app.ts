@@ -27,7 +27,12 @@ app.use(
     store: mySequalizeStore1,
     saveUninitialized: true,
     resave: false,
-    proxy: false,
+    proxy: true, // ✅ Set to true when behind a proxy (like during development)
+    cookie: {
+      httpOnly: true,
+      secure: false, // ✅ Set to true in production with HTTPS
+      maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+    },
   })
 );
 mySequalizeStore1.sync({});
@@ -39,8 +44,15 @@ const corsInstance = cors({
     "http://localhost:5175",
   ],
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 });
 app.use(corsInstance);
+
+app.get("/session-check", (req, res) => {
+  console.log("Session Data:", req.session);
+  res.json(req.session);
+});
 
 app.use("/", AllRouter);
 

@@ -21,31 +21,35 @@ const AuthenticateTeacher = (
   try {
     let token = req.headers.authorization;
     if (!token) {
-      return res.status(401).json({
+      res.status(401).json({
         message: "Token not provided",
       });
+      return;
     }
     token = token.replace("Bearer ", "");
     jwt.verify(token, process.env.JWTSECRET!);
 
     if (!req.session.teacher || !req.session.teacherToken) {
-      return res.status(401).json({
+      res.status(401).json({
         message: "please Login",
       });
+      return;
     }
     if (req.session.teacherToken !== token) {
-      return res.status(401).json({
+      res.status(401).json({
         message: "Invalid token",
       });
+      return;
     }
     if (req.session.teacher.role !== "teacher") {
-      return res.status(401).json({
+      res.status(401).json({
         message: "Please Login from Teacher Account",
       });
+      return;
     }
     next();
   } catch (error) {
-    return res.status(401).json({
+    res.status(401).json({
       message: "Invalid request",
     });
   }

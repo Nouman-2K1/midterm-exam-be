@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
-
 import { Session, SessionData } from "express-session";
 
 interface StudentSession extends Session, Partial<SessionData> {
@@ -21,31 +20,42 @@ const AuthenticateStudent = (
   try {
     let token = req.headers.authorization;
     if (!token) {
-      return res.status(401).json({
+      res.status(401).json({
         message: "Token not provided",
       });
+      return;
     }
     token = token.replace("Bearer ", "");
-    jwt.verify(token, process.env.JWTSECRET!);
+    jwt.verify(token, process.env.JWTSECRET!, (err, decoded) => {
+      if (err) {
+        throw new Error("Token verification failed");
+      } else {
+        console.log("Token verified successfully", decoded);
+      }
+    });
 
     if (!req.session.student || !req.session.studentToken) {
-      return res.status(401).json({
-        message: "please Login",
+      res.status(401).json({
+        message: "Please log in",
       });
+      return;
     }
     if (req.session.studentToken !== token) {
-      return res.status(401).json({
+      res.status(401).json({
         message: "Invalid token",
       });
+      return;
     }
     if (req.session.student.role !== "student") {
-      return res.status(401).json({
-        message: "Please Login from Student Account",
+      res.status(401).json({
+        message: "Please login with a student account",
       });
+      return;
     }
     next();
   } catch (error) {
-    return res.status(401).json({
+    console.error("Error verifying token", error);
+    res.status(401).json({
       message: "Invalid request",
     });
   }

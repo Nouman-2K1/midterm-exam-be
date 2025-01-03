@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 interface StudentAuthControllerType {
   registerStudent: (req: Request, res: Response) => Promise<void>;
   loginStudent: (req: Request, res: Response) => Promise<void>;
+  logoutStudent: (req: Request, res: Response) => Promise<void>;
 }
 
 const StudentAuthController: StudentAuthControllerType = {
@@ -49,6 +50,16 @@ const StudentAuthController: StudentAuthControllerType = {
       res
         .status(statusCode)
         .json({ message: "Bad Request", error: error.message });
+    }
+  },
+  logoutStudent: async (req: Request, res: Response): Promise<void> => {
+    try {
+      await StudentAuthService.logoutStudent(req);
+      res.status(200).json({ message: "Student logged out successfully" });
+    } catch (error: any) {
+      res
+        .status(500)
+        .json({ message: "Internal Server Error", error: error.message });
     }
   },
 };

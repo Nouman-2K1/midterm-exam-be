@@ -1,6 +1,7 @@
 import { hash, compare } from "bcrypt";
 import jwt from "jsonwebtoken";
 import Studentmodel from "../../Models/StudentModels/StudentModel";
+import { promisify } from "util";
 
 const StudentAuthService = {
   registerStudent: async (studentData: {
@@ -59,12 +60,25 @@ const StudentAuthService = {
     });
     req.session.studentToken = studentToken;
     req.session.student = studentdata;
-    console.log(req.session);
-    await req.session.save();
+    const saveSession = promisify(req.session.save).bind(req.session);
+    await saveSession();
     return {
       studentToken,
       studentdata,
     };
+  },
+  logoutStudent: async (req: {
+    session: { destroy: (callback: (err?: any) => void) => void };
+  }) => {
+    return new Promise((resolve, reject) => {
+      req.session.destroy((err) => {
+        if (err) {
+          reject(new Error("Logout failed"));
+        } else {
+          resolve("Logout successful");
+        }
+      });
+    });
   },
 };
 

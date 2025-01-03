@@ -1,6 +1,7 @@
 import { Router } from "express";
 import StudentAuthValidator from "../../Validators/StudentValidators/StudentAuthValidator/StudentAuthValidator";
 import StudentAuthController from "../../Controllers/StudentControllers/StudentAuthController";
+import AuthenticateStudent from "../../Middlewares/StudentMiddlewares/AuthenticateStudent";
 const StudentAuthRouter = Router();
 
 StudentAuthRouter.post(
@@ -12,6 +13,11 @@ StudentAuthRouter.post(
   "/login",
   StudentAuthValidator.loginStudent,
   StudentAuthController.loginStudent
+);
+StudentAuthRouter.post(
+  "/logout",
+  AuthenticateStudent,
+  StudentAuthController.logoutStudent
 );
 
 export default StudentAuthRouter;

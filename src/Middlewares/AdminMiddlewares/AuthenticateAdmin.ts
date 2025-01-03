@@ -21,31 +21,35 @@ const AuthenticateAdmin = (
   try {
     let token = req.headers.authorization;
     if (!token) {
-      return res.status(401).json({
+      res.status(401).json({
         message: "Token not provided",
       });
+      return;
     }
     token = token.replace("Bearer ", "");
     jwt.verify(token, process.env.JWTSECRET!);
 
     if (!req.session.admin || !req.session.adminToken) {
-      return res.status(401).json({
+      res.status(401).json({
         message: "Invalid request",
       });
+      return;
     }
     if (req.session.adminToken !== token) {
-      return res.status(401).json({
+      res.status(401).json({
         message: "Invalid request",
       });
+      return;
     }
     if (req.session.admin.role !== "admin") {
-      return res.status(401).json({
+      res.status(401).json({
         message: "Please Login from Admin Account",
       });
+      return;
     }
     next();
   } catch (error) {
-    return res.status(401).json({
+    res.status(401).json({
       message: "Invalid request",
     });
   }
