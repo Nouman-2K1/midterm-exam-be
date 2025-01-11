@@ -12,7 +12,7 @@ interface AdminAttributes extends Model {
   created_at?: Date;
 }
 
-const AdminModel = sequelize.define<AdminAttributes>("admin", {
+const AdminModel = sequelize.define<AdminAttributes>("Admin", {
   admin_id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   name: { type: DataTypes.STRING(100), allowNull: false },
   password: { type: DataTypes.STRING(255), allowNull: false },

@@ -18,7 +18,10 @@ const StudentAuthController: StudentAuthControllerType = {
           .status(400)
           .json({ message: "Student with this email already exists" });
       } else {
-        res.status(500).json({ message: "Internal Server Error" });
+        res.status(500).json({
+          message: "Internal Server Error",
+          error: error.message,
+        });
       }
     }
   },

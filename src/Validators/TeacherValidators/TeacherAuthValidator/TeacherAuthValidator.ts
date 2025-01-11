@@ -6,6 +6,7 @@ interface RegisterTeacherData {
   email: string;
   password: string;
   role: string;
+  department_id: number;
 }
 
 interface LoginTeacherData {
@@ -15,13 +16,30 @@ interface LoginTeacherData {
 }
 
 const TeacherAuthValidator = {
+  // ✅ Register Teacher Validation
   registerTeacher: (req: Request, res: Response, next: NextFunction): void => {
     const data: RegisterTeacherData = req.body;
     const schema = Joi.object({
-      name: Joi.string().max(20).required(),
-      email: Joi.string().email({ minDomainSegments: 2 }).required(),
-      password: Joi.string().min(6).max(100).required(),
-      role: Joi.string().min(6).max(100).required(),
+      name: Joi.string().max(100).required().messages({
+        "string.max": "Name must be at most 100 characters",
+        "any.required": "Name is required",
+      }),
+      email: Joi.string().email({ minDomainSegments: 2 }).required().messages({
+        "string.email": "Invalid email format",
+        "any.required": "Email is required",
+      }),
+      password: Joi.string().min(8).max(100).required().messages({
+        "string.min": "Password must be at least 8 characters",
+        "any.required": "Password is required",
+      }),
+      role: Joi.string().valid("teacher").required().messages({
+        "any.required": "Role is required",
+      }),
+      department_id: Joi.number().positive().required().messages({
+        "number.base": "Department ID must be a number",
+        "number.positive": "Department ID must be a positive number",
+        "any.required": "Department ID is required",
+      }),
     });
 
     const { error } = schema.validate(data);
@@ -32,12 +50,21 @@ const TeacherAuthValidator = {
     next();
   },
 
+  // ✅ Login Teacher Validation
   loginTeacher: (req: Request, res: Response, next: NextFunction): void => {
     const data: LoginTeacherData = req.body;
     const schema = Joi.object({
-      email: Joi.string().email({ minDomainSegments: 2 }).required(),
-      password: Joi.string().min(6).max(100).required(),
-      role: Joi.string().max(100).required(),
+      email: Joi.string().email({ minDomainSegments: 2 }).required().messages({
+        "string.email": "Invalid email format",
+        "any.required": "Email is required",
+      }),
+      password: Joi.string().min(8).max(100).required().messages({
+        "string.min": "Password must be at least 8 characters",
+        "any.required": "Password is required",
+      }),
+      role: Joi.string().valid("teacher").required().messages({
+        "any.required": "Role is required",
+      }),
     });
 
     const { error } = schema.validate(data);
