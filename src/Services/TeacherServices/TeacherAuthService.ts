@@ -7,9 +7,10 @@ const TeacherAuthService = {
     name: any;
     email: any;
     password: any;
+    department_id: any;
     role: any;
   }) => {
-    const { name, email, password, role } = teacherData;
+    const { name, email, password, role, department_id } = teacherData;
     const teacherExist = await TeacherModel.findOne({ where: { email, role } });
 
     if (teacherExist) {
@@ -22,6 +23,7 @@ const TeacherAuthService = {
       name,
       email,
       password: hashedPassword,
+      department_id,
       role,
     });
 
@@ -32,7 +34,13 @@ const TeacherAuthService = {
     req: {
       session: {
         teacherToken: string;
-        teacher: { id: number; name: string; email: string; role: string };
+        teacher: {
+          teacher_id: number;
+          name: string;
+          email: string;
+          role: string;
+          department_id: number;
+        };
         save: () => any;
       };
     },
@@ -49,9 +57,10 @@ const TeacherAuthService = {
       throw new Error(`Invalid Password`);
     }
     const teacherdata = {
-      id: teacher.id,
+      teacher_id: teacher.teacher_id,
       name: teacher.name,
       email: teacher.email,
+      department_id: teacher.department_id,
       role: teacher.role,
     };
     const teacherToken = jwt.sign(teacherdata, process.env.JWTSECRET!, {

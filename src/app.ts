@@ -14,7 +14,9 @@ const PORT = process.env.PORT || 3301;
 connectDb();
 dbInit()
   .then(() => console.log("DB Synced"))
-  .catch(() => console.log("DB not sycned"));
+  .catch((error) => {
+    console.error("Error syncing DB:", error);
+  });
 
 const mySequalizeStore = SequelizeStore(Session.Store);
 const mySequalizeStore1 = new mySequalizeStore({

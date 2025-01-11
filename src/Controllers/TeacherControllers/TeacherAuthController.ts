@@ -26,7 +26,13 @@ const TeacherAuthController: TeacherAuthControllerType = {
     try {
       const session = req.session as unknown as {
         teacherToken: string;
-        teacher: { id: number; name: string; email: string; role: string };
+        teacher: {
+          teacher_id: number;
+          name: string;
+          email: string;
+          role: string;
+          department_id: number;
+        };
         save: () => any;
       };
       const teacher = await TeacherAuthService.loginTeacher(

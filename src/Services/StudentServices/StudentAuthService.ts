@@ -9,8 +9,25 @@ const StudentAuthService = {
     email: any;
     password: any;
     role: any;
+    roll_number: any;
+    department_id: any;
+    semester: any;
+    admission_year: any;
+    current_year: any;
+    active_status: boolean;
   }) => {
-    const { name, email, password, role } = studentData;
+    const {
+      name,
+      email,
+      password,
+      role,
+      roll_number,
+      department_id,
+      semester,
+      admission_year,
+      current_year,
+      active_status,
+    } = studentData;
     const studentExist = await Studentmodel.findOne({ where: { email, role } });
 
     if (studentExist) {
@@ -24,6 +41,12 @@ const StudentAuthService = {
       email,
       password: hashedPassword,
       role,
+      roll_number,
+      department_id,
+      semester,
+      admission_year,
+      current_year,
+      active_status,
     });
 
     return newStudent;
@@ -33,7 +56,18 @@ const StudentAuthService = {
     req: {
       session: {
         studentToken: string;
-        student: { id: number; name: string; email: string; role: string };
+        student: {
+          student_id: number;
+          name: string;
+          email: string;
+          role: string;
+          roll_number: string;
+          department_id: number;
+          semester: number;
+          admission_year: number;
+          current_year: number;
+          active_status: boolean;
+        };
         save: () => any;
       };
     },
@@ -50,10 +84,16 @@ const StudentAuthService = {
       throw new Error(`Invalid Password`);
     }
     const studentdata = {
-      id: student.id,
+      student_id: student.student_id,
       name: student.name,
       email: student.email,
-      role: student.role,
+      role: student.role || "",
+      roll_number: student.roll_number,
+      department_id: student.department_id,
+      semester: student.semester,
+      admission_year: student.admission_year,
+      current_year: student.current_year,
+      active_status: student.active_status,
     };
     const studentToken = jwt.sign(studentdata, process.env.JWTSECRET!, {
       expiresIn: "14d",

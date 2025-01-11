@@ -27,7 +27,18 @@ const StudentAuthController: StudentAuthControllerType = {
     try {
       const session = req.session as unknown as {
         studentToken: string;
-        student: { id: number; name: string; email: string; role: string };
+        student: {
+          student_id: number;
+          name: string;
+          email: string;
+          role: string;
+          roll_number: string;
+          department_id: number;
+          semester: number;
+          admission_year: number;
+          current_year: number;
+          active_status: boolean;
+        };
         save: () => any;
       };
       const student = await StudentAuthService.loginStudent(

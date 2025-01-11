@@ -26,7 +26,7 @@ const AdminAuthController: AdminAuthControllerType = {
     try {
       const session = req.session as unknown as {
         adminToken: string;
-        admin: { id: number; name: string; email: string; role: string };
+        admin: { admin_id: number; name: string; email: string; role: string };
         save: () => any;
       };
       const admin = await AdminAuthService.loginAdmin({ session }, req.body);

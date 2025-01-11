@@ -32,7 +32,7 @@ const AdminAuthService = {
     req: {
       session: {
         adminToken: string;
-        admin: { id: number; name: string; email: string; role: string };
+        admin: { admin_id: number; name: string; email: string; role: string };
         save: () => any;
       };
     },
@@ -49,7 +49,7 @@ const AdminAuthService = {
       throw new Error(`Invalid Password`);
     }
     const admindata = {
-      id: admin.id,
+      admin_id: admin.admin_id,
       name: admin.name,
       email: admin.email,
       role: admin.role,
