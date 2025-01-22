@@ -21,7 +21,7 @@ const AdminAuthValidator = {
       name: Joi.string().max(20).required(),
       email: Joi.string().email({ minDomainSegments: 2 }).required(),
       password: Joi.string().min(6).max(100).required(),
-      role: Joi.string().min(6).max(100).required(),
+      role: Joi.string().min(4).max(100).required(),
     });
 
     const { error } = schema.validate(data);

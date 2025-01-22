@@ -1,6 +1,7 @@
 import { Router } from "express";
 import AdminAuthValidator from "../../Validators/AdminValidators/AdminAuthValidator/AdminAuthValidator";
 import AdminAuthController from "../../Controllers/AdminControllers/AdminAuthController";
+import AuthenticateAdmin from "../../Middlewares/AdminMiddlewares/AuthenticateAdmin";
 const AdminAuthRouter = Router();
 
 AdminAuthRouter.post(
@@ -12,6 +13,11 @@ AdminAuthRouter.post(
   "/login",
   AdminAuthValidator.loginAdmin,
   AdminAuthController.loginAdmin
+);
+AdminAuthRouter.post(
+  "/logout",
+  AuthenticateAdmin,
+  AdminAuthController.logoutAdmin
 );
 
 export default AdminAuthRouter;

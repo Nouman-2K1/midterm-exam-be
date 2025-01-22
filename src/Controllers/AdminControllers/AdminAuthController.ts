@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 interface AdminAuthControllerType {
   registerAdmin: (req: Request, res: Response) => Promise<void>;
   loginAdmin: (req: Request, res: Response) => Promise<void>;
+  logoutAdmin: (req: Request, res: Response) => Promise<void>;
 }
 
 const AdminAuthController: AdminAuthControllerType = {
@@ -46,6 +47,16 @@ const AdminAuthController: AdminAuthControllerType = {
       res
         .status(statusCode)
         .json({ message: "Bad Request", error: error.message });
+    }
+  },
+  logoutAdmin: async (req: Request, res: Response): Promise<void> => {
+    try {
+      await AdminAuthService.logoutAdmin(req);
+      res.status(200).json({ message: "Admin logged out successfully" });
+    } catch (error: any) {
+      res
+        .status(500)
+        .json({ message: "Internal Server Error", error: error.message });
     }
   },
 };

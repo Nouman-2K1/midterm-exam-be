@@ -66,6 +66,19 @@ const AdminAuthService = {
       admindata,
     };
   },
+  logoutAdmin: async (req: {
+    session: { destroy: (callback: (err?: any) => void) => void };
+  }) => {
+    return new Promise((resolve, reject) => {
+      req.session.destroy((err) => {
+        if (err) {
+          reject(new Error("Logout failed"));
+        } else {
+          resolve("Logout successful");
+        }
+      });
+    });
+  },
 };
 
 export default AdminAuthService;
