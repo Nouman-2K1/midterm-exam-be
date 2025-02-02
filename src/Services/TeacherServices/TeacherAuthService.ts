@@ -1,6 +1,7 @@
 import { hash, compare } from "bcrypt";
 import jwt from "jsonwebtoken";
 import TeacherModel from "../../Models/TeacherModels/TeacherModel";
+import DepartmentModel from "../../Models/DepartmentModels/DepartmentModels";
 
 const TeacherAuthService = {
   registerTeacher: async (teacherData: {
@@ -74,6 +75,77 @@ const TeacherAuthService = {
       teacherToken,
       teacherdata,
     };
+  },
+  logoutTeacher: async (req: {
+    session: { destroy: (callback: (err?: any) => void) => void };
+  }) => {
+    return new Promise((resolve, reject) => {
+      req.session.destroy((err) => {
+        if (err) {
+          reject(new Error("Logout failed"));
+        } else {
+          resolve("Logout successful");
+        }
+      });
+    });
+  },
+  fetchAllTeachers: async () => {
+    try {
+      interface TeacherAttributes {
+        teacher_id: number;
+        name: string;
+        email: string;
+        department_id: number;
+        role: string;
+        created_at: Date;
+      }
+
+      interface TeacherWithDepartment extends TeacherAttributes {
+        Department: {
+          name: string;
+        };
+      }
+
+      const teachers = (await TeacherModel.findAll({
+        attributes: [
+          "teacher_id",
+          "name",
+          "email",
+          "department_id",
+          "role",
+          "created_at",
+        ],
+        include: [
+          {
+            model: DepartmentModel,
+            attributes: ["name"],
+          },
+        ],
+        raw: true,
+        nest: true,
+      })) as unknown as TeacherWithDepartment[];
+
+      const formattedTeachers = teachers.map((teacher) => ({
+        teacher_id: teacher.teacher_id,
+        name: teacher.name,
+        email: teacher.email,
+        department_id: teacher.department_id,
+        role: teacher.role,
+        created_at: teacher.created_at,
+        department_name: teacher.Department.name,
+      }));
+
+      return formattedTeachers;
+    } catch (error) {
+      throw new Error("Failed to fetch teachers");
+    }
+  },
+  deleteTeacher: async ({ teacherId }: { teacherId: number }) => {
+    const deletedCount = await TeacherModel.destroy({
+      where: { teacher_id: teacherId },
+    });
+
+    return deletedCount > 0;
   },
 };
 

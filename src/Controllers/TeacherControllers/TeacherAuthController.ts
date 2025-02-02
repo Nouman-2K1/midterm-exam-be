@@ -4,6 +4,9 @@ import { Request, Response } from "express";
 interface TeacherAuthControllerType {
   registerTeacher: (req: Request, res: Response) => Promise<void>;
   loginTeacher: (req: Request, res: Response) => Promise<void>;
+  logoutTeacher: (req: Request, res: Response) => Promise<void>;
+  getAllTeachers: (req: Request, res: Response) => Promise<void>;
+  deleteTeacher: (req: Request, res: Response) => Promise<void>;
 }
 
 const TeacherAuthController: TeacherAuthControllerType = {
@@ -55,6 +58,45 @@ const TeacherAuthController: TeacherAuthControllerType = {
       res
         .status(statusCode)
         .json({ message: "Bad Request", error: error.message });
+    }
+  },
+  logoutTeacher: async (req: Request, res: Response): Promise<void> => {
+    try {
+      await TeacherAuthService.logoutTeacher(req);
+      res.status(200).json({ message: "Teacher logged out successfully" });
+    } catch (error: any) {
+      res
+        .status(500)
+        .json({ message: "Internal Server Error", error: error.message });
+    }
+  },
+  getAllTeachers: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const teachers = await TeacherAuthService.fetchAllTeachers();
+      res
+        .status(200)
+        .json({ message: "Teachers fetched successfully", teachers });
+    } catch (error: any) {
+      res
+        .status(500)
+        .json({ message: "Internal Server Error", error: error.message });
+    }
+  },
+  deleteTeacher: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { teacher_id } = req.params; // Use department_id here
+      const deletedTeacher = await TeacherAuthService.deleteTeacher({
+        teacherId: Number(teacher_id),
+      });
+      if (deletedTeacher) {
+        res.status(200).json({ message: "Teacher deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Teacher not found" });
+      }
+    } catch (error: any) {
+      res
+        .status(500)
+        .json({ message: "Internal Server Error", error: error.message });
     }
   },
 };
