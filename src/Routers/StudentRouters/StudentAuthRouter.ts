@@ -19,5 +19,9 @@ StudentAuthRouter.post(
   AuthenticateStudent,
   StudentAuthController.logoutStudent
 );
-
+StudentAuthRouter.get("/getAllStudent", StudentAuthController.getAllStudents);
+StudentAuthRouter.delete(
+  "/deleteStudent/:student_id",
+  StudentAuthController.deleteStudent
+);
 export default StudentAuthRouter;

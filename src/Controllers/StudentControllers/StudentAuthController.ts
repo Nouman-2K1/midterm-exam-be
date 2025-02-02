@@ -5,6 +5,8 @@ interface StudentAuthControllerType {
   registerStudent: (req: Request, res: Response) => Promise<void>;
   loginStudent: (req: Request, res: Response) => Promise<void>;
   logoutStudent: (req: Request, res: Response) => Promise<void>;
+  getAllStudents: (req: Request, res: Response) => Promise<void>;
+  deleteStudent: (req: Request, res: Response) => Promise<void>;
 }
 
 const StudentAuthController: StudentAuthControllerType = {
@@ -70,6 +72,36 @@ const StudentAuthController: StudentAuthControllerType = {
     try {
       await StudentAuthService.logoutStudent(req);
       res.status(200).json({ message: "Student logged out successfully" });
+    } catch (error: any) {
+      res
+        .status(500)
+        .json({ message: "Internal Server Error", error: error.message });
+    }
+  },
+  getAllStudents: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const students = await StudentAuthService.fetchAllStudents();
+      res
+        .status(200)
+        .json({ message: "Students fetched successfully", students });
+    } catch (error: any) {
+      res
+        .status(500)
+        .json({ message: "Internal Server Error", error: error.message });
+    }
+  },
+
+  deleteStudent: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { student_id } = req.params;
+      const deletedStudent = await StudentAuthService.deleteStudent({
+        studentId: Number(student_id),
+      });
+      if (deletedStudent) {
+        res.status(200).json({ message: "Student deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Student not found" });
+      }
     } catch (error: any) {
       res
         .status(500)
