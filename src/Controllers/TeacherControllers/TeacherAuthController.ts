@@ -7,6 +7,13 @@ interface TeacherAuthControllerType {
   logoutTeacher: (req: Request, res: Response) => Promise<void>;
   getAllTeachers: (req: Request, res: Response) => Promise<void>;
   deleteTeacher: (req: Request, res: Response) => Promise<void>;
+  createSubject: (req: Request, res: Response) => Promise<void>;
+  getAllSubjects: (req: Request, res: Response) => Promise<void>;
+  deleteSubject: (req: Request, res: Response) => Promise<void>;
+  getEnrollments: (req: Request, res: Response) => Promise<void>;
+  getAvailableStudents: (req: Request, res: Response) => Promise<void>;
+  createEnrollment: (req: Request, res: Response) => Promise<void>;
+  deleteEnrollment: (req: Request, res: Response) => Promise<void>;
 }
 
 const TeacherAuthController: TeacherAuthControllerType = {
@@ -97,6 +104,74 @@ const TeacherAuthController: TeacherAuthControllerType = {
       res
         .status(500)
         .json({ message: "Internal Server Error", error: error.message });
+    }
+  },
+  createSubject: async (req: Request, res: Response) => {
+    try {
+      console.log(req.body);
+      const subject = await TeacherAuthService.createSubject(req.body);
+      console.log(subject);
+      res.status(201).json(subject);
+    } catch (error) {
+      console.error("Error creating subject:", error);
+      res.status(500).json({ error: "Failed to create subject" });
+    }
+  },
+  getAllSubjects: async (req: Request, res: Response) => {
+    try {
+      const subjects = await TeacherAuthService.getAllSubjects();
+      res.json(subjects);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch subjects" });
+    }
+  },
+  deleteSubject: async (req: Request, res: Response) => {
+    try {
+      await TeacherAuthService.deleteSubject(Number(req.params.id)); // Use params.id
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete subject" });
+    }
+  },
+  getEnrollments: async (req, res) => {
+    try {
+      const enrollments = await TeacherAuthService.getEnrollments(
+        Number(req.params.subjectId) // Not req.params.subject_id
+      );
+      res.json(enrollments);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch enrollments" });
+    }
+  },
+
+  getAvailableStudents: async (req, res) => {
+    try {
+      const students = await TeacherAuthService.getAvailableStudents(
+        Number(req.params.subjectId) // Not req.params.subject_id
+      );
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch available students" });
+    }
+  },
+
+  createEnrollment: async (req: Request, res: Response) => {
+    try {
+      const enrollment = await TeacherAuthService.createEnrollment(req.body);
+      res.status(201).json(enrollment);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create enrollment" });
+    }
+  },
+
+  deleteEnrollment: async (req: Request, res: Response) => {
+    try {
+      await TeacherAuthService.deleteEnrollment(
+        Number(req.params.enrollmentId)
+      );
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete enrollment" });
     }
   },
 };

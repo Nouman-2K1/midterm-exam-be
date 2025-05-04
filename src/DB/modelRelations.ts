@@ -50,13 +50,23 @@ const setupModelRelations = () => {
   StudentModel.hasMany(ResultModel, { foreignKey: "student_id" });
 
   // SubjectEnrollment Model Relationships
-  SubjectEnrollmentModel.belongsTo(StudentModel, { foreignKey: "student_id" });
-  SubjectEnrollmentModel.belongsTo(SubjectModel, { foreignKey: "subject_id" });
+  SubjectEnrollmentModel.belongsTo(StudentModel, {
+    foreignKey: "student_id",
+    as: "student", // Add alias
+  });
+
+  StudentModel.hasMany(SubjectEnrollmentModel, {
+    foreignKey: "student_id",
+    as: "enrollments",
+  });
 
   // Subject Model Relationships
+  SubjectModel.hasMany(SubjectEnrollmentModel, {
+    foreignKey: "subject_id",
+    as: "enrollments", // Add alias
+  });
   SubjectModel.belongsTo(TeacherModel, { foreignKey: "teacher_id" });
   SubjectModel.belongsTo(DepartmentModel, { foreignKey: "department_id" });
-  SubjectModel.hasMany(SubjectEnrollmentModel, { foreignKey: "subject_id" });
   SubjectModel.hasMany(ExamModel, { foreignKey: "subject_id" });
 
   // Teacher Model Relationships

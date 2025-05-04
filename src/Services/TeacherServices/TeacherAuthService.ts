@@ -2,6 +2,10 @@ import { hash, compare } from "bcrypt";
 import jwt from "jsonwebtoken";
 import TeacherModel from "../../Models/TeacherModels/TeacherModel";
 import DepartmentModel from "../../Models/DepartmentModels/DepartmentModels";
+import SubjectModel from "../../Models/SubjectModels/SubjectModels";
+import SubjectEnrollmentModel from "../../Models/SubjectEnrollmentModels/SubjectEnrollmentModels";
+import StudentModel from "../../Models/StudentModels/StudentModel";
+import { Op } from "sequelize";
 
 const TeacherAuthService = {
   registerTeacher: async (teacherData: {
@@ -146,6 +150,75 @@ const TeacherAuthService = {
     });
 
     return deletedCount > 0;
+  },
+  async createSubject(subjectData: {
+    name: string;
+    department_id: number;
+    semester: number;
+    academic_year: string;
+    teacher_id: number;
+  }) {
+    return await SubjectModel.create(subjectData);
+  },
+  async getAllSubjects() {
+    return await SubjectModel.findAll();
+  },
+
+  async deleteSubject(subjectId: number) {
+    return await SubjectModel.destroy({
+      where: { subject_id: subjectId },
+    });
+  },
+  async getEnrollments(subjectId: number) {
+    return await SubjectEnrollmentModel.findAll({
+      where: { subject_id: subjectId },
+      include: [
+        {
+          model: StudentModel,
+          as: "student", // Match the alias
+          attributes: ["student_id", "name", "email"],
+        },
+      ],
+    });
+  },
+
+  async getAvailableStudents(subjectId: number) {
+    const enrolledStudents = await SubjectEnrollmentModel.findAll({
+      where: { subject_id: subjectId },
+      attributes: ["student_id"],
+      raw: true,
+    });
+
+    const enrolledStudentIds = enrolledStudents.map((e) => e.student_id);
+
+    return await StudentModel.findAll({
+      where:
+        enrolledStudentIds.length > 0
+          ? { student_id: { [Op.notIn]: enrolledStudentIds } }
+          : {},
+      attributes: ["student_id", "name", "email"],
+    });
+  },
+
+  async createEnrollment(enrollmentData: {
+    subject_id: number;
+    student_id: number;
+  }) {
+    const subject = await SubjectModel.findByPk(enrollmentData.subject_id);
+    if (!subject) throw new Error("Subject not found");
+
+    const student = await StudentModel.findByPk(enrollmentData.student_id);
+    if (!student) throw new Error("Student not found");
+
+    return await SubjectEnrollmentModel.create(enrollmentData);
+  },
+
+  async deleteEnrollment(enrollmentId: number) {
+    const enrollment = await SubjectEnrollmentModel.findByPk(enrollmentId);
+    if (!enrollment) throw new Error("Enrollment not found");
+
+    await enrollment.destroy();
+    return true;
   },
 };
 
