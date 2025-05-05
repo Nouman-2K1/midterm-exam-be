@@ -6,6 +6,8 @@ import SubjectModel from "../../Models/SubjectModels/SubjectModels";
 import SubjectEnrollmentModel from "../../Models/SubjectEnrollmentModels/SubjectEnrollmentModels";
 import StudentModel from "../../Models/StudentModels/StudentModel";
 import { Op } from "sequelize";
+import ExamModel from "../../Models/ExamModels/ExamModels";
+import QuestionModel from "../../Models/QuestionModels/QuestionModels";
 
 const TeacherAuthService = {
   registerTeacher: async (teacherData: {
@@ -218,6 +220,86 @@ const TeacherAuthService = {
     if (!enrollment) throw new Error("Enrollment not found");
 
     await enrollment.destroy();
+    return true;
+  },
+  async getSubjectsByTeacherId(teacherId: number) {
+    return await SubjectModel.findAll({
+      where: { teacher_id: teacherId },
+    });
+  },
+  async createExam(examData: {
+    name: string;
+    subject_id: number;
+    total_marks: number;
+    duration_minutes: number;
+    scheduled_time: Date;
+    academic_year: number;
+    created_by_teacher_id: number;
+  }) {
+    // Verify subject belongs to teacher
+    const subject = await SubjectModel.findOne({
+      where: {
+        subject_id: examData.subject_id,
+        teacher_id: examData.created_by_teacher_id,
+      },
+    });
+
+    if (!subject) throw new Error("Subject not found or access denied");
+
+    return await ExamModel.create(examData);
+  },
+
+  async getExamsByTeacher(teacherId: number) {
+    return await ExamModel.findAll({
+      where: { created_by_teacher_id: teacherId },
+      include: [
+        {
+          model: SubjectModel,
+          where: { teacher_id: teacherId },
+          attributes: ["name"],
+          required: true,
+        },
+      ],
+    });
+  },
+
+  async deleteExam(examId: number, teacherId: number) {
+    const exam = await ExamModel.findOne({
+      where: {
+        exam_id: examId,
+        created_by_teacher_id: teacherId,
+      },
+    });
+
+    if (!exam) throw new Error("Exam not found or access denied");
+
+    await exam.destroy();
+    return true;
+  },
+  async createQuestion(
+    examId: number,
+    questionData: { text: string; options: string[]; correctOption: number }
+  ) {
+    return await QuestionModel.create({ ...questionData, exam_id: examId });
+  },
+
+  async getQuestions(examId: number) {
+    return await QuestionModel.findAll({
+      where: { exam_id: examId },
+      order: [["created_at", "ASC"]],
+    });
+  },
+
+  async deleteQuestion(questionId: number, examId: number) {
+    const question = await QuestionModel.findOne({
+      where: {
+        question_id: questionId,
+        exam_id: examId,
+      },
+    });
+
+    if (!question) throw new Error("Question not found");
+    await question.destroy();
     return true;
   },
 };

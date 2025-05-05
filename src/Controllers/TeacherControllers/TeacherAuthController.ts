@@ -14,6 +14,13 @@ interface TeacherAuthControllerType {
   getAvailableStudents: (req: Request, res: Response) => Promise<void>;
   createEnrollment: (req: Request, res: Response) => Promise<void>;
   deleteEnrollment: (req: Request, res: Response) => Promise<void>;
+  getSubjectsByTeacherId: (req: Request, res: Response) => Promise<void>;
+  createExam: (req: Request, res: Response) => Promise<void>;
+  getExamsByTeacher: (req: Request, res: Response) => Promise<void>;
+  deleteExam: (req: Request, res: Response) => Promise<void>;
+  createQuestion: (req: Request, res: Response) => Promise<void>;
+  getQuestions: (req: Request, res: Response) => Promise<void>;
+  deleteQuestion: (req: Request, res: Response) => Promise<void>;
 }
 
 const TeacherAuthController: TeacherAuthControllerType = {
@@ -172,6 +179,87 @@ const TeacherAuthController: TeacherAuthControllerType = {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete enrollment" });
+    }
+  },
+  getSubjectsByTeacherId: async (req: Request, res: Response) => {
+    try {
+      const teacherId = Number(req.params.teacherId);
+      if (!teacherId) throw new Error("Teacher ID required");
+
+      const subjects = await TeacherAuthService.getSubjectsByTeacherId(
+        teacherId
+      );
+      res.json(subjects);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch teacher's subjects" });
+    }
+  },
+  createExam: async (req: Request, res: Response) => {
+    try {
+      const exam = await TeacherAuthService.createExam({
+        ...req.body,
+        created_by_teacher_id: Number(req.params.teacherId),
+      });
+      res.status(201).json(exam);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create exam" });
+    }
+  },
+
+  getExamsByTeacher: async (req: Request, res: Response) => {
+    try {
+      const exams = await TeacherAuthService.getExamsByTeacher(
+        Number(req.params.teacherId)
+      );
+      res.json(exams);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch exams" });
+    }
+  },
+
+  deleteExam: async (req: Request, res: Response) => {
+    try {
+      await TeacherAuthService.deleteExam(
+        Number(req.params.examId),
+        Number(req.params.teacherId)
+      );
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete exam" });
+    }
+  },
+  createQuestion: async (req: Request, res: Response) => {
+    try {
+      const question = await TeacherAuthService.createQuestion(
+        Number(req.params.examId),
+        req.body
+      );
+      res.status(201).json(question);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create question" });
+    }
+  },
+
+  getQuestions: async (req: Request, res: Response) => {
+    try {
+      const questions = await TeacherAuthService.getQuestions(
+        Number(req.params.examId)
+      );
+      res.json(questions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch questions" });
+    }
+  },
+
+  deleteQuestion: async (req: Request, res: Response) => {
+    try {
+      await TeacherAuthService.deleteQuestion(
+        Number(req.params.questionId),
+        Number(req.params.examId)
+      );
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete question" });
     }
   },
 };

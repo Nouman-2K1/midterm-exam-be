@@ -64,5 +64,41 @@ TeacherAuthRouter.delete(
   AuthenticateTeacher,
   TeacherAuthController.deleteEnrollment
 );
+TeacherAuthRouter.get(
+  "/teacher/:teacherId/classes",
+  AuthenticateTeacher,
+  TeacherAuthController.getSubjectsByTeacherId
+);
+TeacherAuthRouter.post(
+  "/teacher/:teacherId/exams",
+  AuthenticateTeacher,
+  TeacherAuthController.createExam
+);
 
+TeacherAuthRouter.get(
+  "/teacher/:teacherId/exams",
+  AuthenticateTeacher,
+  TeacherAuthController.getExamsByTeacher
+);
+
+TeacherAuthRouter.delete(
+  "/teacher/:teacherId/exams/:examId",
+  AuthenticateTeacher,
+  TeacherAuthController.deleteExam
+);
+TeacherAuthRouter.post(
+  "/exams/:examId/questions",
+  AuthenticateTeacher,
+  TeacherAuthController.createQuestion
+);
+TeacherAuthRouter.get(
+  "/exams/:examId/questions",
+  AuthenticateTeacher,
+  TeacherAuthController.getQuestions
+);
+TeacherAuthRouter.delete(
+  "/exams/:examId/questions/:questionId",
+  AuthenticateTeacher,
+  TeacherAuthController.deleteQuestion
+);
 export default TeacherAuthRouter;
