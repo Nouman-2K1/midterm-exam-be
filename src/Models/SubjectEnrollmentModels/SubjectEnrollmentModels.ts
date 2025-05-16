@@ -5,6 +5,7 @@ import StudentModel from "../StudentModels/StudentModel";
 import SubjectModel from "../SubjectModels/SubjectModels";
 
 interface SubjectEnrollmentAttributes extends Model {
+  subject: any;
   enrollment_id: number;
   subject_id: number;
   student_id: number;

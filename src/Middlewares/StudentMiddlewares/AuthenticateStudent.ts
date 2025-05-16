@@ -29,8 +29,6 @@ const AuthenticateStudent = (
     jwt.verify(token, process.env.JWTSECRET!, (err, decoded) => {
       if (err) {
         throw new Error("Token verification failed");
-      } else {
-        console.log("Token verified successfully", decoded);
       }
     });
 

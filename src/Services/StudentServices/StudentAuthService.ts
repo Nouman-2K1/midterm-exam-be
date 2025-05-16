@@ -3,6 +3,10 @@ import jwt from "jsonwebtoken";
 import Studentmodel from "../../Models/StudentModels/StudentModel";
 import { promisify } from "util";
 import DepartmentModel from "../../Models/DepartmentModels/DepartmentModels";
+import SubjectEnrollmentModel from "../../Models/SubjectEnrollmentModels/SubjectEnrollmentModels";
+import SubjectModel from "../../Models/SubjectModels/SubjectModels";
+import AnnouncementModel from "../../Models/AnnouncementModel/AnnouncementModel";
+import TeacherModel from "../../Models/TeacherModels/TeacherModel";
 
 const StudentAuthService = {
   registerStudent: async (studentData: {
@@ -199,6 +203,65 @@ const StudentAuthService = {
     });
 
     return deletedCount > 0;
+  },
+  async getEnrolledClasses(studentId: number) {
+    try {
+      // Verify student exists
+      const student = await Studentmodel.findByPk(studentId);
+      if (!student) throw new Error("Student not found");
+
+      // Get enrollments with subject details
+      const enrollments = await SubjectEnrollmentModel.findAll({
+        where: { student_id: studentId },
+        include: [
+          {
+            model: SubjectModel,
+            as: "subject",
+            required: true,
+            attributes: [
+              "subject_id",
+              "name",
+              "department_id",
+              "semester",
+              "academic_year",
+              "teacher_id",
+              "created_at",
+            ],
+          },
+        ],
+        order: [["enrolled_at", "DESC"]],
+      });
+
+      // Format response
+      return enrollments.map((enrollment) => ({
+        ...enrollment.subject.get({ plain: true }),
+        enrollment_id: enrollment.enrollment_id,
+        enrolled_at: enrollment.enrolled_at,
+      }));
+    } catch (error) {
+      console.error("Error fetching enrolled classes:", error);
+      throw new Error("Failed to retrieve enrolled classes");
+    }
+  },
+  async getClassAnnouncements(subjectId: number) {
+    try {
+      return await AnnouncementModel.findAll({
+        where: { subject_id: subjectId },
+        include: [
+          {
+            model: TeacherModel,
+            attributes: ["name"],
+            as: "teacher",
+          },
+        ],
+        order: [["created_at", "DESC"]],
+        raw: true,
+        nest: true,
+      });
+    } catch (error) {
+      console.error("Error fetching announcements:", error);
+      throw new Error("Failed to retrieve announcements");
+    }
   },
 };
 

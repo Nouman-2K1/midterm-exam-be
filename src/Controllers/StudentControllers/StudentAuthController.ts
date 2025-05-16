@@ -7,6 +7,8 @@ interface StudentAuthControllerType {
   logoutStudent: (req: Request, res: Response) => Promise<void>;
   getAllStudents: (req: Request, res: Response) => Promise<void>;
   deleteStudent: (req: Request, res: Response) => Promise<void>;
+  getEnrolledClasses: (req: Request, res: Response) => Promise<void>;
+  getClassAnnouncements: (req: Request, res: Response) => Promise<void>;
 }
 
 const StudentAuthController: StudentAuthControllerType = {
@@ -106,6 +108,38 @@ const StudentAuthController: StudentAuthControllerType = {
       res
         .status(500)
         .json({ message: "Internal Server Error", error: error.message });
+    }
+  },
+  getEnrolledClasses: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const studentId = parseInt(req.params.studentId);
+      if (isNaN(studentId)) {
+        res.status(400).json({ error: "Invalid student ID" });
+      }
+
+      const subjects = await StudentAuthService.getEnrolledClasses(studentId);
+      res.json(subjects);
+    } catch (error: any) {
+      res.status(500).json({
+        error: error.message || "Failed to fetch enrolled classes",
+      });
+    }
+  },
+  getClassAnnouncements: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const subjectId = parseInt(req.params.subjectId);
+      if (isNaN(subjectId)) {
+        res.status(400).json({ error: "Invalid subject ID" });
+      }
+
+      const announcements = await StudentAuthService.getClassAnnouncements(
+        subjectId
+      );
+      res.json(announcements);
+    } catch (error: any) {
+      res.status(500).json({
+        error: error.message || "Failed to fetch announcements",
+      });
     }
   },
 };

@@ -24,4 +24,14 @@ StudentAuthRouter.delete(
   "/deleteStudent/:student_id",
   StudentAuthController.deleteStudent
 );
+StudentAuthRouter.get(
+  "/student/:studentId/enrolled-classes",
+  AuthenticateStudent,
+  StudentAuthController.getEnrolledClasses
+);
+StudentAuthRouter.get(
+  "/subject/:subjectId/announcements",
+  AuthenticateStudent,
+  StudentAuthController.getClassAnnouncements
+);
 export default StudentAuthRouter;
