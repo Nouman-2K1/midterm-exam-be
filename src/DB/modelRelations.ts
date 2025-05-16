@@ -100,10 +100,14 @@ const setupModelRelations = () => {
 
   ExamModel.hasMany(QuestionModel, {
     foreignKey: "exam_id",
+    onDelete: "CASCADE", // Add this
+    hooks: true,
   });
 
   ExamModel.hasMany(ExamAttemptModel, {
     foreignKey: "exam_id",
+    onDelete: "CASCADE", // Add this
+    hooks: true,
   });
 
   // ======================

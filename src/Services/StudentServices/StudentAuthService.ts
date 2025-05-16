@@ -7,6 +7,9 @@ import SubjectEnrollmentModel from "../../Models/SubjectEnrollmentModels/Subject
 import SubjectModel from "../../Models/SubjectModels/SubjectModels";
 import AnnouncementModel from "../../Models/AnnouncementModel/AnnouncementModel";
 import TeacherModel from "../../Models/TeacherModels/TeacherModel";
+import { Op } from "sequelize";
+import sequelize from "sequelize";
+import ExamModel from "../../Models/ExamModels/ExamModels";
 
 const StudentAuthService = {
   registerStudent: async (studentData: {
@@ -261,6 +264,98 @@ const StudentAuthService = {
     } catch (error) {
       console.error("Error fetching announcements:", error);
       throw new Error("Failed to retrieve announcements");
+    }
+  },
+  async getStudentExams(
+    studentId: number,
+    status: "upcoming" | "ongoing" | "past"
+  ) {
+    try {
+      const enrollments = await SubjectEnrollmentModel.findAll({
+        where: { student_id: studentId },
+        attributes: ["subject_id"],
+        raw: true,
+      });
+
+      if (enrollments.length === 0) return [];
+      const subjectIds = enrollments.map((e) => e.subject_id);
+      const now = new Date();
+
+      const whereCondition: {
+        subject_id: number[];
+        [Op.and]: (
+          | object
+          | sequelize.WhereAttributeHash
+          | ReturnType<typeof sequelize.literal>
+        )[];
+      } = {
+        subject_id: subjectIds,
+        [Op.and]: [],
+      };
+
+      if (status === "upcoming") {
+        whereCondition[Op.and].push({ scheduled_time: { [Op.gt]: now } });
+      } else if (status === "ongoing") {
+        whereCondition[Op.and].push({
+          scheduled_time: { [Op.lte]: now },
+        });
+        whereCondition[Op.and].push(
+          sequelize.literal(
+            `(scheduled_time + INTERVAL '1 minute' * duration_minutes) > NOW()`
+          )
+        );
+      } else if (status === "past") {
+        whereCondition[Op.and].push(
+          sequelize.literal(
+            `(scheduled_time + INTERVAL '1 minute' * duration_minutes) <= NOW()`
+          )
+        );
+      }
+
+      return await ExamModel.findAll({
+        where: whereCondition,
+        include: [
+          {
+            model: SubjectModel,
+            attributes: ["name"],
+            as: "Subject",
+          },
+          {
+            model: TeacherModel,
+            attributes: ["name"],
+            as: "Teacher",
+          },
+        ],
+        order: [["scheduled_time", "ASC"]],
+      });
+    } catch (error) {
+      console.error("Error fetching exams:", error);
+      throw new Error(`Failed to retrieve ${status} exams`);
+    }
+  },
+  async getExamDetailsById(examId: number) {
+    try {
+      const exam = await ExamModel.findByPk(examId, {
+        include: [
+          {
+            model: SubjectModel,
+            attributes: ["name"],
+          },
+          {
+            model: TeacherModel,
+            attributes: ["name"],
+          },
+        ],
+      });
+
+      if (!exam) {
+        throw new Error("Exam not found");
+      }
+
+      return exam;
+    } catch (error) {
+      console.error("Error fetching exam details:", error);
+      throw new Error("Failed to retrieve exam details");
     }
   },
 };

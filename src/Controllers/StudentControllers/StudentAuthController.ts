@@ -9,6 +9,8 @@ interface StudentAuthControllerType {
   deleteStudent: (req: Request, res: Response) => Promise<void>;
   getEnrolledClasses: (req: Request, res: Response) => Promise<void>;
   getClassAnnouncements: (req: Request, res: Response) => Promise<void>;
+  getStudentExams: (req: Request, res: Response) => Promise<void>;
+  getExamDetails: (req: Request, res: Response) => Promise<void>;
 }
 
 const StudentAuthController: StudentAuthControllerType = {
@@ -140,6 +142,41 @@ const StudentAuthController: StudentAuthControllerType = {
       res.status(500).json({
         error: error.message || "Failed to fetch announcements",
       });
+    }
+  },
+  getStudentExams: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const studentId = parseInt(req.params.studentId);
+      const status = req.query.status as "upcoming" | "ongoing" | "past";
+
+      if (isNaN(studentId))
+        res.status(400).json({ error: "Invalid student ID" });
+      if (!["upcoming", "ongoing", "past"].includes(status)) {
+        res.status(400).json({ error: "Invalid status parameter" });
+      }
+
+      const exams = await StudentAuthService.getStudentExams(studentId, status);
+      res.json(exams);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch exams" });
+    }
+  },
+  getExamDetails: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const examId = parseInt(req.params.examId);
+
+      if (isNaN(examId)) {
+        res.status(400).json({ error: "Invalid exam ID" });
+      }
+
+      const exam = await StudentAuthService.getExamDetailsById(examId);
+      res.json(exam);
+    } catch (error: any) {
+      if (error.message === "Exam not found") {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to fetch exam details" });
+      }
     }
   },
 };
