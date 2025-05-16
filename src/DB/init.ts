@@ -12,6 +12,7 @@ import FlagModel from "../Models/FlagModels/FlagModels";
 import ResultModel from "../Models/ResultModels/ResultsModels";
 import NotificationModel from "../Models/NotificationModels/NotificationModels";
 import setupModelRelations from "./modelRelations";
+import AnnouncementModel from "../Models/AnnouncementModel/AnnouncementModel";
 
 const dbInit = async () => {
   await AdminModel.sync({
@@ -64,6 +65,10 @@ const dbInit = async () => {
     force: false,
   });
   await NotificationModel.sync({
+    alter: true,
+    force: false,
+  });
+  await AnnouncementModel.sync({
     alter: true,
     force: false,
   });

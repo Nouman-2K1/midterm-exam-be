@@ -10,6 +10,7 @@ import ResponseModel from "../Models/ResponseModels/ResponseModels";
 import ResultModel from "../Models/ResultModels/ResultsModels";
 import SubjectEnrollmentModel from "../Models/SubjectEnrollmentModels/SubjectEnrollmentModels";
 import SubjectModel from "../Models/SubjectModels/SubjectModels";
+import AnnouncementModel from "../Models/AnnouncementModel/AnnouncementModel";
 
 // Define all relationships here
 const setupModelRelations = () => {
@@ -72,6 +73,11 @@ const setupModelRelations = () => {
   // Teacher Model Relationships
   TeacherModel.belongsTo(DepartmentModel, { foreignKey: "department_id" });
   TeacherModel.hasMany(SubjectModel, { foreignKey: "teacher_id" });
+  // Relationships
+  AnnouncementModel.belongsTo(SubjectModel, { foreignKey: "subject_id" });
+  AnnouncementModel.belongsTo(TeacherModel, { foreignKey: "teacher_id" });
+  SubjectModel.hasMany(AnnouncementModel, { foreignKey: "subject_id" });
+  TeacherModel.hasMany(AnnouncementModel, { foreignKey: "teacher_id" });
 };
 
 export default setupModelRelations;
