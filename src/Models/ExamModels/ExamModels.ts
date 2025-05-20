@@ -4,6 +4,7 @@ import SubjectModel from "../SubjectModels/SubjectModels";
 import TeacherModel from "../TeacherModels/TeacherModel";
 
 interface ExamAttributes extends Model {
+  questions: any;
   exam_id: number;
   subject_id: number;
   name: string;

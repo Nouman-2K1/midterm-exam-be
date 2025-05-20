@@ -5,6 +5,8 @@ import ExamModel from "../ExamModels/ExamModels";
 import StudentModel from "../StudentModels/StudentModel";
 
 interface ExamAttemptAttributes extends Model {
+  Exam: any;
+  Responses: any;
   attempt_id: number;
   exam_id: number;
   student_id: number;
