@@ -43,4 +43,19 @@ StudentAuthRouter.get(
   AuthenticateStudent,
   StudentAuthController.getExamDetails
 );
+StudentAuthRouter.get(
+  "/:studentId/results",
+  AuthenticateStudent,
+  StudentAuthController.getStudentResults
+);
+StudentAuthRouter.get(
+  "/:studentId/exams/:examId/result-details",
+  AuthenticateStudent,
+  StudentAuthController.getExamResultDetails
+);
+StudentAuthRouter.get(
+  "/:studentId/dashboard",
+  AuthenticateStudent,
+  StudentAuthController.getDashboardData
+);
 export default StudentAuthRouter;

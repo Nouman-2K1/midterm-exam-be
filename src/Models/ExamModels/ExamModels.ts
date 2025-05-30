@@ -14,6 +14,8 @@ interface ExamAttributes extends Model {
   academic_year: number;
   created_by_teacher_id: number;
   created_at?: Date;
+  Subject?: { name: string };
+  Teacher?: { name: string };
 }
 
 const ExamModel = sequelize.define<ExamAttributes>("Exam", {

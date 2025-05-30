@@ -10,6 +10,11 @@ import TeacherModel from "../../Models/TeacherModels/TeacherModel";
 import { Op } from "sequelize";
 import sequelize from "sequelize";
 import ExamModel from "../../Models/ExamModels/ExamModels";
+import ExamAttemptModel from "../../Models/ExamAttemptModels/ExamAttemptModels";
+import ResponseModel from "../../Models/ResponseModels/ResponseModels";
+import QuestionModel from "../../Models/QuestionModels/QuestionModels";
+
+// Add this import if ExamAttributes is defined in your ExamModels file
 
 const StudentAuthService = {
   registerStudent: async (studentData: {
@@ -356,6 +361,258 @@ const StudentAuthService = {
     } catch (error) {
       console.error("Error fetching exam details:", error);
       throw new Error("Failed to retrieve exam details");
+    }
+  },
+  async getStudentResults(studentId: number) {
+    try {
+      // Get enrolled subjects
+      const enrollments = await SubjectEnrollmentModel.findAll({
+        where: { student_id: studentId },
+        attributes: ["subject_id"],
+      });
+
+      if (enrollments.length === 0) return [];
+      const subjectIds = enrollments.map((e) => e.subject_id);
+
+      // Find completed exams (past end time)
+      const completedExams = await ExamModel.findAll({
+        where: {
+          subject_id: subjectIds,
+          [Op.and]: [
+            sequelize.literal(
+              `(scheduled_time + INTERVAL '1 minute' * duration_minutes) <= NOW()`
+            ),
+          ],
+        },
+        include: [
+          { model: SubjectModel, attributes: ["name"] },
+          { model: TeacherModel, attributes: ["name"] },
+        ],
+        order: [["scheduled_time", "DESC"]],
+      });
+
+      // Get exam attempts
+      const examAttempts = await ExamAttemptModel.findAll({
+        where: { student_id: studentId },
+        attributes: ["exam_id", "status", "total_score"],
+      });
+
+      const examAttemptMap = new Map(
+        examAttempts.map((attempt) => [attempt.exam_id, attempt])
+      );
+
+      // Map exam data with attempt status
+      return completedExams.map((exam) => ({
+        exam_id: exam.exam_id,
+        name: exam.name,
+        total_marks: exam.total_marks,
+        duration_minutes: exam.duration_minutes,
+        scheduled_time: exam.scheduled_time,
+        Subject: exam.Subject,
+        Teacher: exam.Teacher,
+        attempted: examAttemptMap.has(exam.exam_id),
+        status: examAttemptMap.get(exam.exam_id)?.status || "missed",
+        score: examAttemptMap.get(exam.exam_id)?.total_score || 0,
+      }));
+    } catch (error) {
+      console.error("Error fetching student results:", error);
+      throw new Error("Failed to retrieve student results");
+    }
+  },
+  async getExamResultDetails(studentId: number, examId: number) {
+    try {
+      // Get exam details
+      const exam = await ExamModel.findByPk(examId, {
+        include: [
+          { model: SubjectModel, attributes: ["name"] },
+          { model: TeacherModel, attributes: ["name"] },
+        ],
+      });
+
+      if (!exam) {
+        throw new Error("Exam not found");
+      }
+
+      // Extract exam data with proper typing
+      const examData = {
+        exam_id: exam.exam_id,
+        name: exam.name,
+        total_marks: exam.total_marks,
+        duration_minutes: exam.duration_minutes,
+        scheduled_time: exam.scheduled_time,
+        Subject: exam.Subject
+          ? { name: exam.Subject.name }
+          : { name: "Unknown" },
+        Teacher: exam.Teacher
+          ? { name: exam.Teacher.name }
+          : { name: "Unknown" },
+      };
+
+      // Get student's attempt
+      const attempt = await ExamAttemptModel.findOne({
+        where: {
+          exam_id: examId,
+          student_id: studentId,
+          status: { [Op.in]: ["completed", "disqualified"] },
+        },
+      });
+
+      if (!attempt) {
+        throw new Error("You didn't attempt this exam");
+      }
+
+      // Get all questions for the exam
+      const questions = await QuestionModel.findAll({
+        where: { exam_id: examId },
+        attributes: [
+          "question_id",
+          "question_text",
+          "option_a",
+          "option_b",
+          "option_c",
+          "option_d",
+          "correct_option",
+        ],
+      });
+
+      // Get student's responses
+      const responses = await ResponseModel.findAll({
+        where: { attempt_id: attempt.attempt_id },
+        attributes: ["question_id", "selected_option", "is_correct"],
+      });
+
+      const responseMap = new Map(responses.map((r) => [r.question_id, r]));
+
+      // Combine questions with student responses
+      const detailedQuestions = questions.map((question) => {
+        const response = responseMap.get(question.question_id);
+        return {
+          question_id: question.question_id,
+          question_text: question.question_text,
+          options: {
+            A: question.option_a,
+            B: question.option_b,
+            C: question.option_c,
+            D: question.option_d,
+          },
+          correct_option: question.correct_option,
+          student_answer: response?.selected_option || null,
+          is_correct: response?.is_correct || false,
+        };
+      });
+
+      // Calculate score stats
+      const correctCount = detailedQuestions.filter((q) => q.is_correct).length;
+      const totalQuestions = detailedQuestions.length;
+      const incorrectCount = totalQuestions - correctCount;
+      const percentage =
+        totalQuestions > 0
+          ? Math.round((correctCount / totalQuestions) * 100)
+          : 0;
+
+      return {
+        exam: examData,
+        attempt: {
+          started_at: attempt.started_at,
+          submitted_at: attempt.submitted_at,
+          total_score: attempt.total_score || 0,
+          status: attempt.status,
+        },
+        questions: detailedQuestions,
+        stats: {
+          total_questions: totalQuestions,
+          correct_count: correctCount,
+          incorrect_count: incorrectCount,
+          percentage: percentage,
+        },
+      };
+    } catch (error) {
+      console.error("Error fetching exam result details:", error);
+      throw new Error("Failed to retrieve exam result details");
+    }
+  },
+  async getDashboardData(studentId: number) {
+    try {
+      // Get enrolled classes count
+      const enrollments = await SubjectEnrollmentModel.count({
+        where: { student_id: studentId },
+      });
+
+      // Get enrolled subject IDs
+      const enrolledSubjects = await SubjectEnrollmentModel.findAll({
+        where: { student_id: studentId },
+        attributes: ["subject_id"],
+        raw: true,
+      });
+      const enrolledSubjectIds = enrolledSubjects.map((sub) => sub.subject_id);
+
+      // Get upcoming exams (next 7 days) for enrolled subjects
+      const upcomingExams = await ExamModel.findAll({
+        where: {
+          subject_id: enrolledSubjectIds,
+          scheduled_time: {
+            [Op.between]: [
+              new Date(),
+              new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            ],
+          },
+        },
+        include: [{ model: SubjectModel, attributes: ["name"] }],
+        order: [["scheduled_time", "ASC"]],
+        limit: 3,
+      });
+
+      // Get recent announcements (last 7 days) for enrolled subjects
+      const recentAnnouncements = await AnnouncementModel.findAll({
+        include: [
+          {
+            model: SubjectModel,
+            attributes: ["name"],
+          },
+        ],
+        where: {
+          subject_id: enrolledSubjectIds,
+          created_at: {
+            [Op.gte]: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          },
+        },
+        order: [["created_at", "DESC"]],
+        limit: 3,
+      });
+
+      // Get exam stats using Sequelize methods
+      const completedExams = await ExamAttemptModel.count({
+        where: {
+          student_id: studentId,
+          status: "completed",
+        },
+      });
+
+      const totalScoreSum = await ExamAttemptModel.sum("total_score", {
+        where: {
+          student_id: studentId,
+          status: "completed",
+        },
+      });
+
+      const averageScore =
+        completedExams > 0 ? Math.round(totalScoreSum / completedExams) : 0;
+
+      const stats = {
+        totalClasses: enrollments,
+        upcomingExamsCount: upcomingExams.length,
+        completedExams: completedExams,
+        averageScore: averageScore,
+      };
+
+      return {
+        upcomingExams,
+        recentAnnouncements,
+        stats,
+      };
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      throw new Error("Failed to retrieve dashboard data");
     }
   },
 };

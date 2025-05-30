@@ -11,6 +11,9 @@ interface StudentAuthControllerType {
   getClassAnnouncements: (req: Request, res: Response) => Promise<void>;
   getStudentExams: (req: Request, res: Response) => Promise<void>;
   getExamDetails: (req: Request, res: Response) => Promise<void>;
+  getStudentResults: (req: Request, res: Response) => Promise<void>;
+  getExamResultDetails: (req: Request, res: Response) => Promise<void>;
+  getDashboardData: (req: Request, res: Response) => Promise<void>;
 }
 
 const StudentAuthController: StudentAuthControllerType = {
@@ -177,6 +180,67 @@ const StudentAuthController: StudentAuthControllerType = {
       } else {
         res.status(500).json({ error: "Failed to fetch exam details" });
       }
+    }
+  },
+  getStudentResults: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const studentId = parseInt(req.params.studentId);
+      if (isNaN(studentId)) {
+        res.status(400).json({ error: "Invalid student ID" });
+        return;
+      }
+
+      const results = await StudentAuthService.getStudentResults(studentId);
+      res.json(results);
+    } catch (error: any) {
+      res.status(500).json({
+        error: error.message || "Failed to fetch student results",
+      });
+    }
+  },
+  getExamResultDetails: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const studentId = parseInt(req.params.studentId);
+      const examId = parseInt(req.params.examId);
+
+      if (isNaN(studentId) || isNaN(examId)) {
+        res.status(400).json({ error: "Invalid student or exam ID" });
+        return;
+      }
+
+      const resultDetails = await StudentAuthService.getExamResultDetails(
+        studentId,
+        examId
+      );
+      res.json(resultDetails);
+    } catch (error: any) {
+      if (error.message === "Exam not found") {
+        res.status(404).json({ error: error.message });
+      } else if (error.message === "You didn't attempt this exam") {
+        res.status(403).json({ error: error.message });
+      } else {
+        res.status(500).json({
+          error: error.message || "Failed to fetch exam result details",
+        });
+      }
+    }
+  },
+  getDashboardData: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const studentId = parseInt(req.params.studentId);
+      if (isNaN(studentId)) {
+        res.status(400).json({ error: "Invalid student ID" });
+        return;
+      }
+
+      const dashboardData = await StudentAuthService.getDashboardData(
+        studentId
+      );
+      res.json(dashboardData);
+    } catch (error: any) {
+      res.status(500).json({
+        error: error.message || "Failed to fetch dashboard data",
+      });
     }
   },
 };

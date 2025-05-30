@@ -50,6 +50,9 @@ const ExamAttemptModel = sequelize.define<ExamAttemptAttributes>(
     status: {
       type: DataTypes.STRING(20),
       defaultValue: "ongoing",
+      validate: {
+        isIn: [["ongoing", "completed", "disqualified", "missed"]],
+      },
     },
   }
 );
