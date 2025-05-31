@@ -2,7 +2,7 @@ import { DataTypes } from "sequelize";
 import sequelize from "../../DB/config";
 import { Model } from "sequelize";
 
-interface DepartmentAttributes extends Model {
+export interface DepartmentAttributes extends Model {
   department_id: number;
   name: string;
   created_at?: Date;

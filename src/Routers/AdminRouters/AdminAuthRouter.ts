@@ -19,5 +19,45 @@ AdminAuthRouter.post(
   AuthenticateAdmin,
   AdminAuthController.logoutAdmin
 );
+AdminAuthRouter.get(
+  "/exams",
+  AuthenticateAdmin,
+  AdminAuthController.getAdminExams
+);
+AdminAuthRouter.get(
+  "/exams/:examId/students",
+  AuthenticateAdmin,
+  AdminAuthController.getAdminExamStudents
+);
+AdminAuthRouter.get(
+  "/attempts/:attemptId/details",
+  AuthenticateAdmin,
+  AdminAuthController.getAdminStudentAttemptDetails
+);
+AdminAuthRouter.get(
+  "/subjects",
+  AuthenticateAdmin,
+  AdminAuthController.getAdminSubjects
+);
+AdminAuthRouter.get(
+  "/subjects/:subjectId/students",
+  AuthenticateAdmin,
+  AdminAuthController.getAdminSubjectStudents
+);
+AdminAuthRouter.get(
+  "/exams/exams",
+  AuthenticateAdmin,
+  AdminAuthController.getAdminExamsExams
+);
+AdminAuthRouter.get(
+  "/exams/:examId/questions",
+  AuthenticateAdmin,
+  AdminAuthController.getAdminExamQuestions
+);
+AdminAuthRouter.get(
+  "/dashboard",
+  AuthenticateAdmin,
+  AdminAuthController.getAdminDashboardData
+);
 
 export default AdminAuthRouter;

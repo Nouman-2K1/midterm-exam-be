@@ -1,8 +1,10 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../../DB/config";
 import { Model } from "sequelize";
-import DepartmentModel from "../DepartmentModels/DepartmentModels";
-import TeacherModel from "../TeacherModels/TeacherModel";
+import DepartmentModel, {
+  DepartmentAttributes,
+} from "../DepartmentModels/DepartmentModels";
+import TeacherModel, { TeacherAttributes } from "../TeacherModels/TeacherModel";
 interface SubjectAttributes extends Model {
   subject_id: number;
   name: string;
@@ -11,6 +13,8 @@ interface SubjectAttributes extends Model {
   academic_year: number;
   teacher_id: number;
   created_at?: Date;
+  Teacher?: TeacherAttributes;
+  Department?: DepartmentAttributes;
 }
 
 const SubjectModel = sequelize.define<SubjectAttributes>("Subject", {

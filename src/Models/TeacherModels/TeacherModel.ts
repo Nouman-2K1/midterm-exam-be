@@ -3,7 +3,7 @@ import sequelize from "../../DB/config";
 import { Model } from "sequelize";
 import DepartmentModel from "../DepartmentModels/DepartmentModels";
 
-interface TeacherAttributes extends Model {
+export interface TeacherAttributes extends Model {
   teacher_id: number;
   name: string;
   email: string;
