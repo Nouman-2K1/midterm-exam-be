@@ -11,6 +11,7 @@ interface FlagAttributes extends Model {
   reason: string;
   reviewed_by_teacher: boolean;
   reviewed_by_admin: boolean;
+  ExamAttempt?: any;
 }
 
 const FlagModel = sequelize.define<FlagAttributes>("Flag", {

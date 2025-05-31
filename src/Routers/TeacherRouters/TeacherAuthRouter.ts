@@ -101,4 +101,25 @@ TeacherAuthRouter.delete(
   AuthenticateTeacher,
   TeacherAuthController.deleteQuestion
 );
+TeacherAuthRouter.get(
+  "/:teacherId/exams",
+  AuthenticateTeacher,
+  TeacherAuthController.getTeacherExams
+);
+TeacherAuthRouter.get(
+  "/exams/:examId/students",
+  AuthenticateTeacher,
+  TeacherAuthController.getExamStudents
+);
+TeacherAuthRouter.get(
+  "/attempts/:attemptId/details",
+  AuthenticateTeacher,
+  TeacherAuthController.getStudentAttemptDetails
+);
+
+TeacherAuthRouter.get(
+  "/:teacher_id/dashboard",
+  AuthenticateTeacher,
+  TeacherAuthController.getTeacherDashboard
+);
 export default TeacherAuthRouter;

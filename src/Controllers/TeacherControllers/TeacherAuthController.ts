@@ -21,6 +21,10 @@ interface TeacherAuthControllerType {
   createQuestion: (req: Request, res: Response) => Promise<void>;
   getQuestions: (req: Request, res: Response) => Promise<void>;
   deleteQuestion: (req: Request, res: Response) => Promise<void>;
+  getTeacherExams: (req: Request, res: Response) => Promise<void>;
+  getExamStudents: (req: Request, res: Response) => Promise<void>;
+  getStudentAttemptDetails: (req: Request, res: Response) => Promise<void>;
+  getTeacherDashboard: (req: Request, res: Response) => Promise<void>;
 }
 
 const TeacherAuthController: TeacherAuthControllerType = {
@@ -260,6 +264,65 @@ const TeacherAuthController: TeacherAuthControllerType = {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete question" });
+    }
+  },
+
+  getTeacherExams: async (req: Request, res: Response) => {
+    try {
+      const exams = await TeacherAuthService.getTeacherExams(
+        Number(req.params.teacherId)
+      );
+      res.json(exams);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  },
+
+  getExamStudents: async (req: Request, res: Response) => {
+    try {
+      const students = await TeacherAuthService.getExamStudents(
+        Number(req.params.examId)
+      );
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  },
+
+  getStudentAttemptDetails: async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const attemptId = parseInt(req.params.attemptId);
+      if (isNaN(attemptId)) {
+        res.status(400).json({ error: "Invalid attempt ID" });
+        return;
+      }
+
+      const details = await TeacherAuthService.getStudentAttemptDetails(
+        attemptId
+      );
+      res.json(details);
+    } catch (error: any) {
+      if (error.message && error.message.includes("Attempt not found")) {
+        res.status(404).json({ error: error.message });
+      } else {
+        console.error("Controller error:", error);
+        res.status(500).json({ error: error.message });
+      }
+    }
+  },
+  getTeacherDashboard: async (req: Request, res: Response) => {
+    try {
+      const teacherId = parseInt(req.params.teacher_id);
+      const dashboardData = await TeacherAuthService.getTeacherDashboardData(
+        teacherId
+      );
+      res.json(dashboardData);
+    } catch (error) {
+      console.error("Error fetching teacher dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard data" });
     }
   },
 };

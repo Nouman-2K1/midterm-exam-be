@@ -5,9 +5,14 @@ import DepartmentModel from "../../Models/DepartmentModels/DepartmentModels";
 import SubjectModel from "../../Models/SubjectModels/SubjectModels";
 import SubjectEnrollmentModel from "../../Models/SubjectEnrollmentModels/SubjectEnrollmentModels";
 import StudentModel from "../../Models/StudentModels/StudentModel";
-import { Op } from "sequelize";
+import { Identifier, Op } from "sequelize";
 import ExamModel from "../../Models/ExamModels/ExamModels";
 import QuestionModel from "../../Models/QuestionModels/QuestionModels";
+import ExamAttemptModel from "../../Models/ExamAttemptModels/ExamAttemptModels";
+import ResponseModel from "../../Models/ResponseModels/ResponseModels";
+import FlagModel from "../../Models/FlagModels/FlagModels";
+import sequelize from "../../DB/config";
+import AnnouncementModel from "../../Models/AnnouncementModel/AnnouncementModel";
 
 const TeacherAuthService = {
   registerTeacher: async (teacherData: {
@@ -301,6 +306,252 @@ const TeacherAuthService = {
     if (!question) throw new Error("Question not found");
     await question.destroy();
     return true;
+  },
+  getTeacherExams: async (teacherId: any) => {
+    try {
+      return await ExamModel.findAll({
+        where: { created_by_teacher_id: teacherId },
+        include: [{ model: SubjectModel, attributes: ["name"] }],
+        order: [["scheduled_time", "DESC"]],
+      });
+    } catch (error) {
+      throw new Error("Failed to retrieve teacher exams");
+    }
+  },
+
+  getExamStudents: async (examId: any) => {
+    try {
+      return await ExamAttemptModel.findAll({
+        where: { exam_id: examId },
+        include: [
+          {
+            model: StudentModel,
+            attributes: ["student_id", "name", "roll_number"],
+          },
+        ],
+        attributes: ["attempt_id", "total_score", "status"],
+      });
+    } catch (error) {
+      throw new Error("Failed to retrieve exam students");
+    }
+  },
+
+  getStudentAttemptDetails: async (attemptId: number) => {
+    try {
+      // Get attempt with student and exam details
+      const attempt = await ExamAttemptModel.findByPk(attemptId, {
+        include: [
+          {
+            model: StudentModel,
+            attributes: ["student_id", "name", "roll_number"],
+          },
+          {
+            model: ExamModel,
+            attributes: ["name", "total_marks"],
+            include: [{ model: SubjectModel, attributes: ["name"] }],
+          },
+        ],
+      });
+
+      if (!attempt) throw new Error("Attempt not found");
+
+      // Get all responses for this attempt
+      const responses = await ResponseModel.findAll({
+        where: { attempt_id: attemptId },
+        attributes: [
+          "response_id",
+          "question_id",
+          "selected_option",
+          "is_correct",
+        ],
+      });
+
+      // Get all questions for the exam
+      const questions = await QuestionModel.findAll({
+        where: { exam_id: attempt.exam_id },
+        attributes: [
+          "question_id",
+          "question_text",
+          "option_a",
+          "option_b",
+          "option_c",
+          "option_d",
+          "correct_option",
+        ],
+      });
+
+      // Create a map for quick question lookup
+      const questionMap = new Map();
+      questions.forEach((q) => questionMap.set(q.question_id, q));
+
+      // Combine responses with questions
+      const detailedResponses = responses.map((r) => ({
+        response_id: r.response_id,
+        selected_option: r.selected_option,
+        is_correct: r.is_correct,
+        question: questionMap.get(r.question_id),
+      }));
+
+      return {
+        attempt,
+        responses: detailedResponses,
+      };
+    } catch (error) {
+      console.error("Error fetching attempt details:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to retrieve attempt details: ${errorMessage}`);
+    }
+  },
+
+  getTeacherDashboardData: async (teacherId: number) => {
+    try {
+      // 1. Get teacher's subjects
+      const teacherSubjects = await SubjectModel.findAll({
+        where: { teacher_id: teacherId },
+        attributes: ["subject_id"],
+      });
+      const subjectIds = teacherSubjects.map((s) => s.subject_id);
+
+      if (subjectIds.length === 0) {
+        return {
+          stats: {
+            totalSubjects: 0,
+            upcomingExamsCount: 0,
+            totalStudents: 0,
+            pendingFlags: 0,
+          },
+          upcomingExams: [],
+          recentAnnouncements: [],
+          recentFlags: [],
+        };
+      }
+
+      // 2. Get stats in parallel
+      const [totalSubjects, upcomingExamsCount, totalStudents] =
+        await Promise.all([
+          SubjectModel.count({ where: { teacher_id: teacherId } }),
+          ExamModel.count({
+            where: {
+              created_by_teacher_id: teacherId,
+              scheduled_time: { [Op.gt]: new Date() },
+            },
+          }),
+          SubjectEnrollmentModel.count({
+            distinct: true,
+            col: "student_id",
+            where: { subject_id: { [Op.in]: subjectIds } },
+          }),
+        ]);
+
+      // 3. Get pending flags count
+      const pendingFlags = await FlagModel.count({
+        where: { reviewed_by_teacher: false },
+        include: [
+          {
+            model: ExamAttemptModel,
+            required: true,
+            include: [
+              {
+                model: ExamModel,
+                required: true,
+                where: { created_by_teacher_id: teacherId },
+              },
+            ],
+          },
+        ],
+      });
+
+      // 4. Get upcoming exams
+      const upcomingExams = await ExamModel.findAll({
+        where: {
+          created_by_teacher_id: teacherId,
+          scheduled_time: { [Op.gt]: new Date() },
+        },
+        order: [["scheduled_time", "ASC"]],
+        limit: 5,
+        include: [
+          {
+            model: SubjectModel,
+            attributes: ["name"],
+          },
+        ],
+      });
+
+      // Add student counts to exams
+      const examsWithCounts = await Promise.all(
+        upcomingExams.map(async (exam) => {
+          const studentCount = await SubjectEnrollmentModel.count({
+            where: { subject_id: exam.subject_id },
+          });
+          return {
+            ...exam.toJSON(),
+            student_count: studentCount,
+          };
+        })
+      );
+
+      // 5. Get recent announcements
+      const recentAnnouncements = await AnnouncementModel.findAll({
+        where: { teacher_id: teacherId },
+        order: [["created_at", "DESC"]],
+        limit: 5,
+        include: [
+          {
+            model: SubjectModel,
+            attributes: ["name"],
+          },
+        ],
+      });
+
+      // 6. Get recent flags with exam and student info
+      const recentFlags = await FlagModel.findAll({
+        where: { reviewed_by_teacher: false },
+        order: [["flagged_at", "DESC"]],
+        limit: 5,
+        include: [
+          {
+            model: ExamAttemptModel,
+            required: true,
+            as: "ExamAttempt",
+            include: [
+              {
+                model: ExamModel,
+                attributes: ["name"],
+              },
+              {
+                model: StudentModel,
+                attributes: ["name"],
+              },
+            ],
+          },
+        ],
+      });
+
+      return {
+        stats: {
+          totalSubjects,
+          upcomingExamsCount,
+          totalStudents,
+          pendingFlags,
+        },
+        upcomingExams: examsWithCounts,
+        recentAnnouncements,
+        recentFlags: recentFlags.map((flag) => ({
+          flag_id: flag.flag_id,
+          flag_type: flag.flag_type,
+          reason: flag.reason,
+          flagged_at: flag.flagged_at,
+          ExamAttempt: {
+            Exam: flag.ExamAttempt.Exam,
+            Student: flag.ExamAttempt.Student,
+          },
+        })),
+      };
+    } catch (error) {
+      console.error("Error in teacherService.getTeacherDashboardData:", error);
+      throw error;
+    }
   },
 };
 
