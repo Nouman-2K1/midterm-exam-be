@@ -533,12 +533,10 @@ const StudentAuthService = {
   },
   async getDashboardData(studentId: number) {
     try {
-      // Get enrolled classes count
       const enrollments = await SubjectEnrollmentModel.count({
         where: { student_id: studentId },
       });
 
-      // Get enrolled subject IDs
       const enrolledSubjects = await SubjectEnrollmentModel.findAll({
         where: { student_id: studentId },
         attributes: ["subject_id"],
@@ -546,15 +544,38 @@ const StudentAuthService = {
       });
       const enrolledSubjectIds = enrolledSubjects.map((sub) => sub.subject_id);
 
-      // Get upcoming exams (next 7 days) for enrolled subjects
+      const now = new Date();
+      const startOfDay = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + 7);
+      const endOfDay = new Date(
+        endDate.getFullYear(),
+        endDate.getMonth(),
+        endDate.getDate(),
+        23,
+        59,
+        59,
+        999
+      );
+
+      const upcomingExamsCount = await ExamModel.count({
+        where: {
+          subject_id: enrolledSubjectIds,
+          scheduled_time: {
+            [Op.between]: [startOfDay, endOfDay],
+          },
+        },
+      });
+
       const upcomingExams = await ExamModel.findAll({
         where: {
           subject_id: enrolledSubjectIds,
           scheduled_time: {
-            [Op.between]: [
-              new Date(),
-              new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            ],
+            [Op.between]: [startOfDay, endOfDay],
           },
         },
         include: [{ model: SubjectModel, attributes: ["name"] }],
@@ -562,7 +583,6 @@ const StudentAuthService = {
         limit: 3,
       });
 
-      // Get recent announcements (last 7 days) for enrolled subjects
       const recentAnnouncements = await AnnouncementModel.findAll({
         include: [
           {
@@ -580,7 +600,6 @@ const StudentAuthService = {
         limit: 3,
       });
 
-      // Get exam stats using Sequelize methods
       const completedExams = await ExamAttemptModel.count({
         where: {
           student_id: studentId,
@@ -600,7 +619,7 @@ const StudentAuthService = {
 
       const stats = {
         totalClasses: enrollments,
-        upcomingExamsCount: upcomingExams.length,
+        upcomingExamsCount,
         completedExams: completedExams,
         averageScore: averageScore,
       };

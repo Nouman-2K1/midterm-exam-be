@@ -79,7 +79,7 @@ const AnnouncementService = {
           {
             model: TeacherModel,
             attributes: ["name"],
-            as: "Teacher",
+            as: "teacher",
           },
           {
             model: SubjectModel,
